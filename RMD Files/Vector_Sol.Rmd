@@ -1,0 +1,106 @@
+---
+title: "Support Vector Machines"
+author: "Name"
+date: "Date"
+output:
+  html_document:
+        keep_md: true
+---
+
+
+
+```{r}
+#Support Vector Machines Project
+#For this project we will be exploring publicly available data from
+#LendingClub.com. Lending Club connects people who need money (borrowers) with #people who have money (investors). Hopefully, as an investor you would want to #invest in people who showed a profile of having a high probability of paying #you back. We will try to create a model that will help predict this.
+
+setwd('C:/Users/admin/Desktop/R/R-Course-HTML-Notes/R-for-Data-Science-and-Machine-Learning/Training Exercises/Machine Learning Projects/CSV files for ML Projects')
+loans <- read.csv('loan_data.csv')
+#Check the summary and structure of loans.
+
+str(loans)
+```
+
+```{r}
+#Convert the following columns to categorical data using factor()
+
+#inq.last.6mths
+#delinq.2yrs
+#pub.rec
+#not.fully.paid
+#credit.policy
+loans$credit.policy <- factor(loans$credit.policy)
+loans$inq.last.6mths <- factor(loans$inq.last.6mths)
+loans$delinq.2yrs <- factor(loans$delinq.2yrs)
+loans$pub.rec <- factor(loans$pub.rec)
+loans$not.fully.paid <- factor(loans$not.fully.paid)
+```
+
+```{r}
+#EDA
+#Create a histogram of fico scores colored by not.fully.paid
+
+library(ggplot2)
+pl <- ggplot(loans,aes(x=fico)) 
+pl <- pl + geom_histogram(aes(fill=not.fully.paid),color='black',bins=40,alpha=0.5)
+pl + scale_fill_manual(values = c('green','red')) + theme_bw()
+```
+
+```{r}
+#Create a barplot of purpose counts, colored by not.fully.paid. Use position=dodge in the geom_bar argument
+
+pl <- ggplot(loans,aes(x=factor(purpose))) 
+pl <- pl + geom_bar(aes(fill=not.fully.paid),position = "dodge")
+pl + theme_bw() + theme(axis.text.x = element_text(angle = 90, hjust = 1))
+```
+
+```{r}
+#Create a scatterplot of fico score versus int.rate
+
+ggplot(loans,aes(int.rate,fico)) +geom_point(aes(color=not.fully.paid),alpha=0.3) + theme_bw()
+```
+
+```{r}
+#Building the Model
+
+
+#Train and Test Sets
+
+library(caTools)
+
+set.seed(101)
+
+spl = sample.split(loans$not.fully.paid, 0.7)
+
+train = subset(loans, spl == TRUE)
+
+test = subset(loans, spl == FALSE)
+```
+
+```{r}
+
+library(e1071)
+#Use the svm() function to train a model on your training set.
+
+model <- svm(not.fully.paid ~ .,data=train)
+#Get a summary of the model.
+
+summary(model)
+```
+
+```{r}
+#Predictions
+predicted.values <- predict(model,test[1:13])
+table(predicted.values,test$not.fully.paid)
+```
+
+```{r}
+#Results were not up to the mark so we tune the model
+
+#tune.results <- tune(svm,train.x=not.fully.paid~., data=train,kernel='radial',
+                  #ranges=list(cost=c(1,10), gamma=c(0.1,1)))
+model <- svm(not.fully.paid ~ .,data=train,cost=10,gamma = 0.1)
+predicted.values <- predict(model,test[1:13])
+table(predicted.values,test$not.fully.paid)
+```
+ 

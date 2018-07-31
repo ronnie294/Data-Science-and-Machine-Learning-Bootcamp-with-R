@@ -1,0 +1,128 @@
+---
+title: "Trees Method"
+output:
+  pdf_document: default
+  html_document:
+    df_print: paged
+---
+
+
+```{r}
+#Tree Methods Project
+
+#For this project we will be exploring the use of tree methods to classify schools as Private or Public based off their features.
+
+#Get the Data
+
+library(ISLR)
+
+head(College)
+```
+
+```{r}
+df<-College
+
+#Exploring the data
+
+library(ggplot2)
+ggplot(df,aes(Room.Board,Grad.Rate)) + geom_point(aes(color=Private))
+
+
+```
+
+```{r}
+#Create a histogram of full time undergrad students, color by Private.
+
+ggplot(df,aes(F.Undergrad)) + geom_histogram(aes(fill=Private),color='black',bins=50)
+```
+
+```{r}
+#Create a histogram of Grad.Rate colored by Private. We see something odd here.
+
+ggplot(df,aes(Grad.Rate)) + geom_histogram(aes(fill=Private),color='black',bins=50)
+```
+
+```{r}
+#A college had grad rate above 100, we fix that
+subset(df,Grad.Rate > 100)
+```
+```{r}
+df['Cazenovia College','Grad.Rate'] <- 100
+```
+
+```{r}
+#Train Test Split
+
+library(caTools)
+set.seed(101) 
+
+sample = sample.split(df$Private, SplitRatio = .70)
+train = subset(df, sample == TRUE)
+test = subset(df, sample == FALSE)
+
+```
+
+```{r}
+#Decision Tree
+library(rpart)
+tree <- rpart(Private ~.,method='class',data = train)
+```
+
+```{r}
+#Use predict() to predict the Private label on the test data.
+
+tree.preds <- predict(tree,test)
+
+head(tree.preds)
+```
+
+```{r}
+#Turn these two columns into one column to match the original Yes/No Label for a Private column.
+
+tree.preds <- as.data.frame(tree.preds)
+
+joiner <- function(x){
+    if (x>=0.5){
+        return('Yes')
+    }else{
+        return("No")
+    }
+}
+tree.preds$Private <- sapply(tree.preds$Yes,joiner)
+head(tree.preds)
+```
+
+```{r}
+table(tree.preds$Private,test$Private)    #Confusion Matrix
+```
+
+```{r}
+#Use the rpart.plot library and the prp() function to plot out your tree model.
+
+library(rpart.plot)
+prp(tree)
+
+```
+
+```{r}
+#Random Forest
+#Now let's build out a random forest model!
+
+
+library(randomForest)
+
+rf.model <- randomForest(Private ~ . , data = train,importance = TRUE)
+```
+
+```{r}
+#Predictions
+#Now use your random forest model to predict on your test set!
+
+p <- predict(rf.model,test)
+table(p,test$Private)
+```
+
+```{r}
+#Random forests performs slightly better than a single tree in this case
+```
+

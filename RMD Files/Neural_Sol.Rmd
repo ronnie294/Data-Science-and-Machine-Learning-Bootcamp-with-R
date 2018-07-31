@@ -1,0 +1,116 @@
+---
+title: "Neural Nets"
+output:
+  pdf_document: default
+  html_document:
+    df_print: paged
+---
+
+This is an [R Markdown](http://rmarkdown.rstudio.com) Notebook. When you execute code within the notebook, the results appear beneath the code. 
+
+Try executing this chunk by clicking the *Run* button within the chunk or by placing your cursor inside it and pressing *Ctrl+Shift+Enter*. 
+
+```{r}
+#Neural Net Project
+
+#We'll use the Bank Authentication Data Set from the UCI repository.
+
+setwd('C:/Users/admin/Desktop/R/R-Course-HTML-Notes/R-for-Data-Science-and-Machine-Learning/Training Exercises/Machine Learning Projects/CSV files for ML Projects')
+
+df <- read.csv('bank_note_data.csv')
+
+head(df)
+```
+
+```{r}
+str(df)
+```
+
+```{r}
+#Train Test Split
+#Use the caTools library to split the data into training and testing sets.
+
+library(caTools)
+set.seed(101)
+split = sample.split(df$Class, SplitRatio = 0.70)
+
+train = subset(df, split == TRUE)
+test = subset(df, split == FALSE)
+```
+
+```{r}
+str(train)
+```
+
+```{r}
+#Building the Neural Net
+#Call the neuralnet library
+
+
+library(neuralnet)
+```
+
+```{r}
+#Training the Model
+#Use the neuralnet function to train a neural net, set linear.output=FALSe and choose 10 hidden neurons (hidden=10)
+
+nn <- neuralnet(Class ~ Image.Var + Image.Skew + Image.Curt + Entropy,data=train,hidden=10,linear.output=FALSE)
+
+
+```
+
+```{r}
+#Predictions
+#Use compute() to grab predictions useing your nn model on the test set. Reference the lecture on how to do this.
+
+predicted.nn.values <- compute(nn,test[,1:4])
+#Check the head of the predicted values. You should notice that they are still probabilities.
+
+head(predicted.nn.values$net.result)
+```
+
+```{r}
+#Apply the round function to the predicted values so you only 0s and 1s as your predicted classes.
+
+predictions <- sapply(predicted.nn.values$net.result,round)
+head(predictions)
+```
+
+```{r}
+#Use table() to create a confusion matrix of your predictions versus the real values
+
+table(predictions,test$Class)
+           
+ 
+```
+
+```{r}
+#Comparing Models
+
+
+library(randomForest)
+#Run the Code below to set the Class column of the data as a factor (randomForest needs it to be a factor, not an int like neural nets did. Then re-do the train/test split
+
+df$Class <- factor(df$Class)
+library(caTools)
+set.seed(101)
+split = sample.split(df$Class, SplitRatio = 0.70)
+
+train = subset(df, split == TRUE)
+test = subset(df, split == FALSE)
+#Create a randomForest model with the new adjusted training data.
+
+model <- randomForest(Class ~ Image.Var + Image.Skew + Image.Curt + Entropy,data=train)
+#Use predict() to get the predicted values from your rf model.
+
+rf.pred <- predict(model,test)
+
+
+table(rf.pred,test$Class)
+```
+
+```{r}
+# WE see that both the model performed really well, but neural nets did better than random forests and in this case were perfect in their predictions
+```
+
+

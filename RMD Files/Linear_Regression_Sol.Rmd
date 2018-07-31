@@ -1,0 +1,107 @@
+---
+title: "Linear Regression"
+output:
+  pdf_document: default
+  html_document:
+    df_print: paged
+---
+
+
+
+```{r}
+#Read in bikeshare.csv file and set it to a dataframe called bike.
+setwd('C:/Users/admin/Desktop/R/R-Course-HTML-Notes/R-for-Data-Science-and-Machine-Learning/Training Exercises/Machine Learning Projects/CSV files for ML Projects')
+bike <- read.csv('bikeshare.csv')
+
+```
+
+```{r}
+#Exploratory Data Analysis
+library(ggplot2)
+ggplot(bike,aes(temp,count)) + geom_point(alpha=0.2, aes(color=temp)) + theme_bw()
+```
+
+```{r}
+#Plot count versus datetime as a scatterplot with a color gradient based on temperature. You'll need to convert the datetime column into POSIXct before plotting.
+
+bike$datetime <- as.POSIXct(bike$datetime)
+ggplot(bike,aes(datetime,count)) + geom_point(aes(color=temp),alpha=0.5)  + scale_color_continuous(low='#55D8CE',high='#FF6E2E') +theme_bw()
+```
+
+```{r}
+#Hopefully you noticed two things: A seasonality to the data, for winter and summer. Also that bike rental counts are increasing in general. This may present a problem with using a linear regression model if the data is non-linear.
+
+cor(bike[,c('temp','count')])
+```
+
+```{r}
+#Let's explore the season data. Create a boxplot, with the y axis indicating count and the x axis begin a box for each season.
+ggplot(bike,aes(factor(season),count)) + geom_boxplot(aes(color=factor(season))) +theme_bw()
+```
+
+```{r}
+#Create an "hour" column that takes the hour from the datetime column. You'll probably need to apply some function to the entire datetime column and reassign it.
+
+bike$hour <- sapply(bike$datetime,function(x){format(x,"%H")})
+
+head(bike)
+```
+
+```{r}
+#Now create a scatterplot of count versus hour, with color scale based on temp. Only use bike data where workingday==1
+
+library(dplyr)
+pl <- ggplot(filter(bike,workingday==1),aes(hour,count)) 
+pl <- pl + geom_point(position=position_jitter(w=1, h=0),aes(color=temp),alpha=0.5)
+pl <- pl + scale_color_gradientn(colours = c('dark blue','blue','light blue','light green','yellow','orange','red'))
+pl + theme_bw()
+```
+
+```{r}
+#Now create the same plot for non working days:
+
+pl <- ggplot(filter(bike,workingday==0),aes(hour,count)) 
+pl <- pl + geom_point(position=position_jitter(w=1, h=0),aes(color=temp),alpha=0.8)
+pl <- pl + scale_color_gradientn(colours = c('dark blue','blue','light blue','light green','yellow','orange','red'))
+pl + theme_bw()
+
+```
+
+```{r}
+#You should have noticed that working days have peak activity during the morning (~8am) and right after work gets out (~5pm), with some lunchtime activity. While the non-work days have a steady rise and fall for the afternoon
+
+#Building the Model
+
+temp.model <- lm(count~temp,bike)
+
+summary(temp.model)
+```
+
+```{r}
+#How many bike rentals would we predict if the temperature was 25 degrees Celsius? Calculate this two ways:
+
+#Using the values we just got above
+#Using the predict() function
+
+# Method 1
+6.0462 + 9.17*25
+```
+
+```{r}
+# Method 2
+temp.test <- data.frame(temp=c(25))
+predict(temp.model,temp.test)
+```
+
+```{r}
+#Finally build a model that attempts to predict count based off of the following features.
+
+model <- lm(count ~ . -casual - registered -datetime -atemp,bike )
+
+summary(model)
+```
+
+```{r}
+#A linear model like the one we chose which uses OLS won't be able to take into account seasonality of our data, and will get thrown off by the growth in our dataset, accidentally attributing it towards the winter season, instead of realizing its just overall demand growing! Later on, we'll see if other models may be a better fit for this sort of data
+```
+

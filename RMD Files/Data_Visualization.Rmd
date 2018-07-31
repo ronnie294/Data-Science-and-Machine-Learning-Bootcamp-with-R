@@ -1,0 +1,89 @@
+---
+title: "Data Visualization"
+output:
+  pdf_document: default
+  html_notebook: default
+---
+```{r}
+setwd("C:/Users/admin/Desktop/R/R-Course-HTML-Notes/R-for-Data-Science-and-Machine-Learning/Training Exercises/Capstone and Data Viz Projects/Data Visualization Project")
+
+```
+
+```{r}
+
+
+library(ggplot2) 
+library(data.table)
+df<-fread("Economist_Assignment_Data.csv")
+```
+
+```{r}
+head(df)
+```
+```{r}
+pl <- ggplot(data=df,aes(x=CPI,y=HDI,color=Region))
+pl + geom_point()
+```
+
+```{r}
+pl + geom_point(shape=1,size=4)
+```
+```{r}
+pl + geom_point(shape=1,size=4) + geom_smooth(aes(group=1))
+```
+
+```{r}
+pl2 <- pl + geom_point(shape=1,size=4) + geom_smooth(aes(group=1),method='lm',formula = y ~ log(x),color='red',se=FALSE)
+pl2
+```
+
+```{r}
+pl2+geom_text(aes(label=Country))
+```
+
+```{r}
+pointsToLabel <- c("Russia", "Venezuela", "Iraq", "Myanmar", "Sudan",
+                   "Afghanistan", "Congo", "Greece", "Argentina", "Brazil",
+                   "India", "Italy", "China", "South Africa", "Spane",
+                   "Botswana", "Cape Verde", "Bhutan", "Rwanda", "France",
+                   "United States", "Germany", "Britain", "Barbados", "Norway",                     "Japan","New Zealand", "Singapore")
+
+pl3 <- pl2 + geom_text(aes(label = Country), color = "gray20", 
+                data = subset(df, Country %in% pointsToLabel),check_overlap = TRUE)
+
+pl3
+```
+
+```{r}
+pl4 <- pl3 + theme_bw() 
+pl4
+
+```
+
+```{r}
+pl5 <- pl4 + scale_x_continuous(name = "Corruption Perceptions Index, 2011 (10=least corrupt)",
+                     limits = c(.9, 10.5),breaks=1:10) 
+pl5
+
+```
+
+```{r}
+pl6 <- pl5 + scale_y_continuous(name = "Human Development Index, 2011 (1=Best)",
+                     limits = c(0.2, 1.0))
+pl6
+
+```
+
+```{r}
+pl6 + ggtitle("Corruption and Human development")
+
+```
+
+```{r}
+
+library(ggthemes)
+pl6 + theme_economist_white()
+```
+
+
+
